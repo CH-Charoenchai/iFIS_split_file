@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="icon" href="https://i.ibb.co/KzFb7FyD/logo-i-FIS.png" type="image/x-icon">
+    <title>ระบบจัดการข้อมูล iFIS</title>
+    <style>
+        .logo {
+            position: absolute;
+            top: 28px;
+            left: 100px;
+            width: 100px;
+            height: 100px;
+            z-index: 999;
+            /* ให้แสดงอยู่ด้านบนของทุกอย่าง */
+            border-radius: 50%;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #1e40af;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+
+        }
+
+        .btn {
+            background: #1e40af;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+
+        }
+
+        .btn2 {
+            background: #288853;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+
+        }
+
+        .btnDL {
+            background: #1e40af;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #fd7200;
+            /* background: #ea580c; */
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #eee;
+            margin-bottom: 5px;
+        }
+
+        .file-name {
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 0px;
+            background: linear-gradient(to right, #e7e7e7, #e7e7e7);
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #fff;
+            font-weight: bold;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .tab:hover {
+            background-color: #c4c4c4;
+        }
+
+        .tab.active {
+            background-color: #1e40af;
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .file-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #eee;
+            border-top: 3px solid #1e40af;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .logo img {
+            width: 5%;
+            height: auto;
+        }
+
+        .headpage {
+            width: auto;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .download-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .cardFile {
+            background: white;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            border-radius: 0 0 8px 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <img src="https://i.ibb.co/KzFb7FyD/logo-i-FIS.png" alt="Logo" class="logo">
+
+    <header>
+        <div class="headpage">
+            <div class="container">
+                <h1>ระบบจัดการข้อมูล iFIS</h1>
+                <hr>
+                <img src="https://cdn-icons-png.flaticon.com/512/732/732220.png" alt="Excel Icon" width="24" style="vertical-align: middle; margin-right: 8px;
+                                border-radius: 50%;
+                                padding: 4px; background: white;">
+                เว็บไซต์สำหรับจัดการข้อมูลจากระบบ iFIS และแบ่งไฟล์ Excel ตามสาขา
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="card">
+            <h2>
+                อัพโหลดไฟล์ Excel
+                <img src="https://cdn-icons-png.flaticon.com/512/732/732220.png" alt="Excel Icon" width="24" style="vertical-align: middle; 
+                /* ทำให้อยู่แนวเดียวกับข้อความไม่ลอย */
+                margin-left: 4px;
+                /* border-radius: 50%; */
+                padding: 4px; background: white;">
+            </h2>
+            <div class="upload-area" id="uploadArea">
+                <p>ลากไฟล์มาวางที่นี่ หรือ</p>
+                <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
+                <button class="btn" onclick="document.getElementById('fileInput').click()">เลือกไฟล์</button>
+            </div>
+            <div id="uploadProgress" style="display: none; width: 100%; margin-top: 10px;">
+                <div style="background-color: #f0f0f0; height: 20px; border-radius: 4px; overflow: hidden;">
+                    <div id="progressBar"
+                        style="background-color: #1e40af; height: 100%; width: 0%; transition: width 0.2s;"></div>
+                </div>
+                <div style="text-align: center; margin-top: 5px;"><span id="progressPercentage">0%</span></div>
+            </div>
+            <div id="uploadedFile" style="display: none;">
+                <div class="file-item">
+                    <div class="file-name" id="fileName">filename.xlsx</div>
+                    <button class="btn" onclick="removeFile()">ลบ</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>แบ่งไฟล์ตามสาขา</h2>
+                <p>ระบบจะแบ่งไฟล์ตามสาขาจากทุกชีท (ยกเว้นชีท Rule)</p>
+                <button class="btn" id="splitAllBtn" disabled>ดำเนินการแบ่งไฟล์</button>
+            </div>
+
+            <div class="card">
+                <h2>แบ่งไฟล์ตามสาขา Top 3</h2>
+                <p>ระบบจะแบ่งไฟล์ตามคอลัมน์ "Branch Name" จากชีท "Rule"
+                </p>
+                <button class="btn" id="splitRuleBtn" disabled>ดำเนินการแบ่งไฟล์ Top 3</button>
+            </div>
+        </div>
+
+        <div class="tabs" id="resultTabs" style="display: none;">
+            <div class="tab active" data-tab="allSheets">ผลลัพธ์ (ทุกชีท)</div>
+            <div class="tab" data-tab="ruleSheet">ผลลัพธ์ (Top3)</div>
+        </div>
+
+
+        <div class="tab-content active" id="allSheets">
+            <div class="cardFile" id="resultAllCard" style="display: none;">
+                <div class="download-actions">
+                    <div>
+                        <input type="checkbox" id="selectAllFiles" onchange="toggleSelectAll('allFilesContainer')">
+                        <label for="selectAllFiles">เลือกทั้งหมด</label>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" id="downloadZipAllBtn">ดาวน์โหลดเป็น ZIP</button>
+                        <button class="btn2" id="downloadSelectedAllBtn">ดาวน์โหลดที่เลือก</button>
+                    </div>
+                </div>
+                <div class="file-list" id="allFilesContainer"></div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="ruleSheet">
+            <div class="cardFile" id="resultRuleCard" style="display: none;">
+                <div class="download-actions">
+                    <div>
+                        <input type="checkbox" id="selectAllRuleFiles" onchange="toggleSelectAll('ruleFilesContainer')">
+                        <label for="selectAllRuleFiles">เลือกทั้งหมด</label>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary" id="downloadZipRuleBtn">ดาวน์โหลดเป็น ZIP</button>
+                        <button class="btn2" id="downloadSelectedRuleBtn">ดาวน์โหลดที่เลือก</button>
+                    </div>
+                </div>
+                <div class="file-list" id="ruleFilesContainer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loadingPopup">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div id="loadingMessage">กำลังประมวลผล...</div>
+        </div>
+    </div>
+
+
+    <footer class="footer">
+        <div class="container">
+            <p>ระบบจัดการข้อมูล iFIS &copy; 2025</p>
+        </div>
+    </footer>
+
+
+    <script>
+        let workbook = null;
+        let originalFileName = '';
+        let allBranchFiles = {};
+        let ruleBranchFiles = {};
+
+        // คอลัมน์แบ่งสาขาสำหรับแต่ละชีท
+        const sheetColumnMapping = {
+            'S1_R1_R2_S5_R1': 'สาขา',
+            'S1_R3_S7_R1_R2': 'ชื่อสาขา',
+            'S2_R1': 'ชื่อสาขาเจ้าของกรมธรรม์',
+            'S2_R2': 'สาขาเจ้าของกรมธรรม์',
+            'S2_R3': 'สาขาเจ้าของกรมธรรม์',
+            'S2_R4': 'สาขาเจ้าของกรมธรรม์',
+            'S3_R1': 'สาขา',
+            'S3_R2': 'สาขา',
+            'S4_R1_R2_R3': 'สาขาเจ้าของกรมธรรม์',
+            'S4_R4': 'สาขาเจ้าของกรมธรรม์',
+            'S5_R2_R3': 'สาขาเจ้าของกรมธรรม์',
+            'S8_R1': 'สาขาเจ้าของกรมธรรม์',
+            'S9_R1': 'สาขาเจ้าของกรมธรรม์'
+        };
+
+        // อัพโหลดไฟล์
+        document.getElementById('fileInput').addEventListener('change', function (e) {
+            if (e.target.files.length > 0) {
+                displayUploadedFile(e.target.files[0]);
+            }
+        });
+
+        // แสดงไฟล์ที่อัพโหลด
+        function displayUploadedFile(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('uploadedFile').style.display = 'block';
+
+            readExcelFile(file)
+                .then(() => {
+                    document.getElementById('splitAllBtn').disabled = false;
+                    document.getElementById('splitRuleBtn').disabled = false;
+                })
+                .catch(error => {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                    removeFile();
+                });
+        }
+
+        // อ่านไฟล์ Excel
+        function readExcelFile(file) {
+            return new Promise((resolve, reject) => {
+                originalFileName = file.name.replace(/\.[^/.]+$/, "");
+                const reader = new FileReader();
+
+                // เพิ่มส่วนแสดงความคืบหน้า
+                const progressBar = document.getElementById('progressBar');
+                const progressPercentage = document.getElementById('progressPercentage');
+                const uploadProgress = document.getElementById('uploadProgress');
+                uploadProgress.style.display = 'block';
+
+                // อัพเดทความคืบหน้า
+                reader.onprogress = function (event) {
+                    if (event.lengthComputable) {
+                        const percentage = Math.round((event.loaded / event.total) * 100);
+                        progressBar.style.width = percentage + '%';
+                        progressPercentage.textContent = percentage + '%';
+                    }
+                };
+
+                reader.onload = function (e) {
+                    try {
+                        // อัพเดทความคืบหน้าเป็น 100% เมื่อโหลดเสร็จ
+                        progressBar.style.width = '100%';
+                        progressPercentage.textContent = '100%';
+
+                        workbook = XLSX.read(e.target.result, { type: 'array' });
+
+                        // ตรวจสอบความถูกต้องของไฟล์
+                        let hasValidSheets = false;
+
+                        // ตรวจสอบชีท Rule
+                        if (workbook.SheetNames.includes('Rule')) {
+                            const ruleSheet = workbook.Sheets['Rule'];
+                            const ruleData = XLSX.utils.sheet_to_json(ruleSheet);
+                            if (ruleData.length > 0 && ruleData[0].hasOwnProperty('Branch Name')) {
+                                hasValidSheets = true;
+                            }
+                        }
+
+                        // ตรวจสอบชีทอื่นๆ
+                        for (const sheetName of workbook.SheetNames) {
+                            if (sheetName in sheetColumnMapping) {
+                                hasValidSheets = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasValidSheets) {
+                            uploadProgress.style.display = 'none'; // ซ่อนแถบความคืบหน้าเมื่อเกิดข้อผิดพลาด
+                            reject(new Error('ไฟล์ Excel ไม่ถูกต้อง กรุณาตรวจสอบชีทและคอลัมน์ที่จำเป็น'));
+                            return;
+                        }
+
+                        // ซ่อนแถบความคืบหน้าหลังจากอัพโหลดสำเร็จหลังจาก 1 วินาที
+                        setTimeout(() => {
+                            uploadProgress.style.display = 'none';
+                        }, 1000);
+
+                        resolve(workbook);
+                    } catch (error) {
+                        uploadProgress.style.display = 'none'; // ซ่อนแถบความคืบหน้าเมื่อเกิดข้อผิดพลาด
+                        reject(error);
+                    }
+                };
+
+                reader.onerror = function () {
+                    uploadProgress.style.display = 'none'; // ซ่อนแถบความคืบหน้าเมื่อเกิดข้อผิดพลาด
+                    reject(new Error('ไม่สามารถอ่านไฟล์ได้'));
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // ลบไฟล์
+        function removeFile() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadedFile').style.display = 'none';
+            document.getElementById('splitAllBtn').disabled = true;
+            document.getElementById('splitRuleBtn').disabled = true;
+
+            // รีเซ็ตและซ่อนแถบความคืบหน้า
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = '0%';
+            document.getElementById('progressPercentage').textContent = '0%';
+            document.getElementById('uploadProgress').style.display = 'none';
+        }
+
+        // แบ่งไฟล์ตามทุกชีท
+        async function splitAllSheets() {
+            const branchFiles = {};
+            const branchData = {};
+
+            // วนลูปทุกชีทในไฟล์
+            for (const sheetName of workbook.SheetNames) {
+                // ข้ามชีท Report Name
+                if (sheetName === 'Report Name') continue;
+
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+                // ตรวจสอบว่าชีทนี้มีคอลัมน์ที่กำหนดไว้หรือไม่
+                const columnName = sheetColumnMapping[sheetName];
+                if (!columnName) continue;
+
+                // แบ่งข้อมูลตามสาขา
+                jsonData.forEach(row => {
+                    const branchName = row[columnName];
+                    if (!branchName) return;
+
+                    if (!branchData[branchName]) {
+                        branchData[branchName] = {};
+                    }
+
+                    if (!branchData[branchName][sheetName]) {
+                        branchData[branchName][sheetName] = [];
+                    }
+
+                    branchData[branchName][sheetName].push(row);
+                });
+            }
+
+            // สร้างไฟล์สำหรับแต่ละสาขา
+            for (const branchName in branchData) {
+                const newWorkbook = XLSX.utils.book_new();
+
+                // เพิ่มชีท Report Name จากไฟล์ต้นฉบับ (ถ้ามี)
+                if (workbook.SheetNames.includes('Report Name')) {
+                    const reportSheet = workbook.Sheets['Report Name'];
+                    XLSX.utils.book_append_sheet(newWorkbook, reportSheet, 'Report Name');
+                }
+
+                // เพิ่มข้อมูลของแต่ละชีท
+                for (const sheetName in branchData[branchName]) {
+                    const ws = XLSX.utils.json_to_sheet(branchData[branchName][sheetName]);
+                    XLSX.utils.book_append_sheet(newWorkbook, ws, sheetName);
+                }
+
+                // สร้างไฟล์ Excel
+                const wbout = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+                const fileName = `Branch_${branchName}.xlsx`;
+                branchFiles[fileName] = blob;
+
+                // updateStatus(statusPopup, "การประมวลผลเสร็จสมบูรณ์!");
+                // setTimeout(() => {
+                //     statusPopup.remove();
+                // }, 2000);            
+            }
+
+            allBranchFiles = branchFiles;
+            return branchFiles;
+        }
+
+
+        async function processRuleSheet() {
+            try {
+                // 1. อ่านข้อมูลจากชีท Rule
+                const ruleSheet = workbook.Sheets['Rule'];
+                const ruleData = XLSX.utils.sheet_to_json(ruleSheet);
+
+                // 2. หา unique Sales values และสร้างข้อมูลพื้นฐาน
+                const uniqueSales = {};
+                ruleData.forEach(row => {
+                    const sales = row['Sales'];
+                    if (!sales) return;
+
+                    if (!uniqueSales[sales]) {
+                        uniqueSales[sales] = {
+                            'Sales': sales,
+                            'Sale ID': row['Sale ID'],
+                            'Branch Name': row['Branch Name'],
+                            'Zone': row['Zone'],
+                            'Branch': row['Branch'],
+                            'Total Score': row['Total Score']
+                        };
+                    }
+                });
+
+                const uniqueSalesArray = Object.values(uniqueSales);
+                // 3. จัดกลุ่มตาม Branch Name เพื่อหา Top 3
+                const branchGroups = {};
+                uniqueSalesArray.forEach(row => {
+                    const branchName = row['Branch Name'];
+                    if (!branchName) return;
+
+                    if (!branchGroups[branchName]) {
+                        branchGroups[branchName] = [];
+                    }
+                    branchGroups[branchName].push(row);
+                });
+
+                // 4. คำนวณ Top 3 สำหรับแต่ละสาขา
+                for (const branchName in branchGroups) {
+                    // เรียงลำดับคะแนนจากมากไปน้อย
+                    branchGroups[branchName].sort((a, b) => b['Total Score'] - a['Total Score']);
+
+                    let topRank = 1;
+                    let prevScore = null;
+
+                    for (let i = 0; i < branchGroups[branchName].length; i++) {
+                        const row = branchGroups[branchName][i];
+                        const score = row['Total Score'];
+
+                        if (score !== prevScore) {
+                            // ถ้าไม่ใช่คะแนนเดิมให้เพิ่มอันดับใหม่ตามจำนวนอันดับที่เจอแล้ว
+                            if (topRank > 3) {
+                                row['Top3'] = 0;
+                            } else {
+                                row['Top3'] = topRank;
+                            }
+
+                            prevScore = score;
+
+                            // เช็คว่ามีแถวอื่นที่คะแนนเดียวกันตามหลังมั้ย
+                            // แล้วค่อยเพิ่ม topRank ทีหลัง
+                            let sameScoreCount = 1;
+                            for (let j = i + 1; j < branchGroups[branchName].length; j++) {
+                                if (branchGroups[branchName][j]['Total Score'] === score) {
+                                    sameScoreCount++;
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            // mark แถวถัดไปที่คะแนนเท่ากัน
+                            for (let k = 1; k < sameScoreCount; k++) {
+                                const nextRow = branchGroups[branchName][i + k];
+                                nextRow['Top3'] = topRank > 3 ? 0 : topRank;
+                            }
+
+                            i += (sameScoreCount - 1); // ข้ามไปแถวถัดจากกลุ่มเดียวกัน
+                            topRank++;
+                        }
+                    }
+                }
+
+
+
+                // 5. รวมข้อมูลทั้งหมดเข้าด้วยกัน
+                const processedData = [];
+                for (const branchName in branchGroups) {
+                    processedData.push(...branchGroups[branchName]);
+                }
+
+                // 6. สร้างชื่อคอลัมน์ AFS code
+                const afsColumns = [
+                    'AFS-001-01',
+                    'AFS-001-02',
+                    'AFS-001-03',
+                    'AFS-002-01',
+                    'AFS-002-02',
+                    'AFS-002-03',
+                    'AFS-002-04',
+                    'AFS-002-04',
+                    'AFS-003-01',
+                    'AFS-003-02',
+                    'AFS-004-01',
+                    'AFS-004-02',
+                    'AFS-004-03',
+                    'AFS-004-04',
+                    'AFS-005-01',
+                    'AFS-005-02',
+                    'AFS-005-03',
+                    'AFS-006-01',
+                    'AFS-007-01',
+                    'AFS-007-02',
+                    'AFS-007-03',
+                    'AFS-008-01',
+                    'AFS-009-01',
+                    'AFS-010-01',
+
+                ];
+
+                // 7. ดึงข้อมูลจากคอลัมน์ Rules (10 ตัวแรก) มาเติมในคอลัมน์ที่กำหนด
+                const salesLookup = {};
+                ruleData.forEach(row => {
+                    const sales = row['Sales'];
+                    if (!sales || !row['Rules']) return;
+
+                    const rulePrefix = String(row['Rules']).substring(0, 10);
+                    if (!afsColumns.includes(rulePrefix)) return;
+
+                    if (!salesLookup[sales]) {
+                        salesLookup[sales] = {};
+                    }
+
+                    // เก็บเฉพาะ 10 ตัวแรกของ Rules
+                    salesLookup[sales][rulePrefix] = String(row['Rules']).substring(0, 10);
+                });
+
+                // เติมข้อมูล Rules ใน processedData
+                processedData.forEach(row => {
+                    const sales = row['Sales'];
+
+                    // เพิ่มคอลัมน์ AFS codes
+                    afsColumns.forEach(code => {
+                        if (salesLookup[sales] && salesLookup[sales][code]) {
+                            row[code] = salesLookup[sales][code];
+                        } else {
+                            row[code] = '';
+                        }
+                    });
+                });
+
+                // 8. สร้างชีทใหม่
+                const newWorkbook = XLSX.utils.book_new();
+                const newWs = XLSX.utils.json_to_sheet(processedData);
+                XLSX.utils.book_append_sheet(newWorkbook, newWs, 'Top3_Rule');
+
+                // 9. สร้างไฟล์แยกตามสาขา (เฉพาะ Top3 ไม่เท่ากับ 0)
+                const branchFiles = {};
+
+                // สร้างไฟล์รวม Top3 ทั้งหมด
+                const wboutAll = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'array' });
+                const blobAll = new Blob([wboutAll], { type: 'application/octet-stream' });
+                branchFiles['รวม Top3.xlsx'] = blobAll;
+
+                // แบ่งไฟล์ตามสาขา (เฉพาะ Top3 ไม่เท่ากับ 0)
+                const branchTop3Groups = {};
+                processedData.forEach(row => {
+                    if (row['Top3'] === 0) return; // ข้ามถ้า Top3 เป็น 0
+
+                    const branchName = row['Branch Name'];
+                    if (!branchName) return;
+
+                    if (!branchTop3Groups[branchName]) {
+                        branchTop3Groups[branchName] = [];
+                    }
+
+                    branchTop3Groups[branchName].push(row);
+                });
+
+                // สร้างไฟล์สำหรับแต่ละสาขา
+                for (const branchName in branchTop3Groups) {
+                    const branchWb = XLSX.utils.book_new();
+                    const branchWs = XLSX.utils.json_to_sheet(branchTop3Groups[branchName]);
+                    XLSX.utils.book_append_sheet(branchWb, branchWs, 'Top3');
+
+                    const wbout = XLSX.write(branchWb, { bookType: 'xlsx', type: 'array' });
+                    const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+                    const fileName = `Top3_Branch_${branchName}.xlsx`;
+                    branchFiles[fileName] = blob;
+                }
+
+                ruleBranchFiles = branchFiles;
+                return branchFiles;
+            } catch (error) {
+                console.error("เกิดข้อผิดพลาด:", error);
+                alert("เกิดข้อผิดพลาดในการประมวลผลข้อมูล: " + error.message);
+                return {};
+            }
+        }
+
+        // // ฟังก์ชันอัปเดตข้อความสถานะใน popup
+        function updateStatus(popup, message) {
+            const statusText = popup.querySelector('#statusText');
+            statusText.textContent = message;
+            console.log(message);
+        }
+
+
+
+        // แสดงรายการไฟล์
+        function displayBranchFiles(branchFiles, containerId) {
+            const fileContainer = document.getElementById(containerId);
+            fileContainer.innerHTML = '';
+
+            Object.keys(branchFiles).forEach((fileName, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-item';
+                fileDiv.innerHTML = `
+          <input type="checkbox" id="file-${containerId}-${index}" class="file-checkbox" data-filename="${fileName}">
+          <div class="file-name">${fileName}</div>
+          <button class="btnDL" onclick="downloadFile('${fileName}', '${containerId}')">ดาวน์โหลด</button>
+        `;
+                fileContainer.appendChild(fileDiv);
+            });
+        }
+
+        // ดาวน์โหลดไฟล์
+        function downloadFile(fileName, containerId) {
+            const files = containerId === 'allFilesContainer' ? allBranchFiles : ruleBranchFiles;
+            const blob = files[fileName];
+
+            if (!blob) {
+                alert('ไม่พบไฟล์ที่ต้องการดาวน์โหลด');
+                return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 0);
+        }
+
+        // เลือกทั้งหมด
+        function toggleSelectAll(containerId) {
+            const container = document.getElementById(containerId);
+            const checkboxes = container.querySelectorAll('.file-checkbox');
+            const selectAllCheckbox = containerId === 'allFilesContainer' ?
+                document.getElementById('selectAllFiles') :
+                document.getElementById('selectAllRuleFiles');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        }
+
+        // ดาวน์โหลดที่เลือก
+        function downloadSelected(containerId) {
+            const container = document.getElementById(containerId);
+            const checkboxes = container.querySelectorAll('.file-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                alert('กรุณาเลือกไฟล์ที่ต้องการดาวน์โหลด');
+                return;
+            }
+
+            checkboxes.forEach(checkbox => {
+                const fileName = checkbox.getAttribute('data-filename');
+                downloadFile(fileName, containerId);
+            });
+        }
+
+        // ดาวน์โหลดเป็น ZIP
+        async function downloadAllAsZip(containerId) {
+            const container = document.getElementById(containerId);
+            const checkboxes = container.querySelectorAll('.file-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                alert('กรุณาเลือกไฟล์ที่ต้องการดาวน์โหลด');
+                return;
+            }
+
+            const files = containerId === 'allFilesContainer' ? allBranchFiles : ruleBranchFiles;
+            const zip = new JSZip();
+
+            checkboxes.forEach(checkbox => {
+                const fileName = checkbox.getAttribute('data-filename');
+                const blob = files[fileName];
+                if (blob) {
+                    zip.file(fileName, blob);
+                }
+            });
+
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const zipName = containerId === 'allFilesContainer' ?
+                `${originalFileName}_branches_all.zip` :
+                `${originalFileName}_branches_rule.zip`;
+
+            saveAs(zipBlob, zipName);
+        }
+
+        // แสดง/ซ่อน Loading
+        function showLoading(message = 'กำลังประมวลผล...') {
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingPopup').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingPopup').style.display = 'none';
+        }
+
+        // การทำงานของแท็บ
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function () {
+                const tabId = this.getAttribute('data-tab');
+
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Drag & Drop
+        const dropArea = document.getElementById('uploadArea');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.style.borderColor = '#1e40af';
+                dropArea.style.backgroundColor = '#f0f7ff';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.style.borderColor = '#ccc';
+                dropArea.style.backgroundColor = '';
+            });
+        });
+
+        dropArea.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                    file.type === 'application/vnd.ms-excel') {
+                    displayUploadedFile(file);
+                } else {
+                    alert('กรุณาอัพโหลดไฟล์ Excel เท่านั้น (.xlsx, .xls)');
+                }
+            }
+        });
+
+        // ปุ่มแบ่งไฟล์ (สาขา)
+        document.getElementById('splitAllBtn').addEventListener('click', function () {
+            if (!workbook) {
+                alert('กรุณาอัพโหลดไฟล์ Excel ก่อน');
+                return;
+            }
+
+            showLoading('กำลังแบ่งไฟล์ตามสาขา...');
+
+
+            setTimeout(() => {
+                splitAllSheets()
+                    .then(branchFiles => {
+                        document.getElementById('resultTabs').style.display = 'flex';
+                        document.getElementById('resultAllCard').style.display = 'block';
+                        displayBranchFiles(branchFiles, 'allFilesContainer');
+                        hideLoading();
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        alert('เกิดข้อผิดพลาด: ' + error.message);
+                    });
+            }, 100);
+        });
+
+        // ปุ่มแบ่งไฟล์ Top3 (ชีท Rule)
+        document.getElementById('splitRuleBtn').addEventListener('click', function () {
+            if (!workbook) {
+                alert('กรุณาอัพโหลดไฟล์ Excel ก่อน');
+                return;
+            }
+
+            if (!workbook.SheetNames.includes('Rule')) {
+                alert('ไฟล์นี้ไม่มีชีท "Rule" กรุณาตรวจสอบไฟล์ของคุณ');
+                return;
+            }
+
+            showLoading('กำลังแบ่งไฟล์ Top3 ตามชีท Rule...');
+
+            setTimeout(() => {
+                // splitRuleSheet()
+                processRuleSheet()
+                    .then(branchFiles => {
+                        document.getElementById('resultTabs').style.display = 'flex';
+                        document.getElementById('resultRuleCard').style.display = 'block';
+                        displayBranchFiles(branchFiles, 'ruleFilesContainer');
+                        hideLoading();
+                    })
+                    .catch(error => {
+                        hideLoading();
+                        alert('เกิดข้อผิดพลาด: ' + error.message);
+                    });
+            }, 100);
+        });
+
+        // ปุ่มดาวน์โหลดที่เลือก
+        document.getElementById('downloadSelectedAllBtn').addEventListener('click', function () {
+            downloadSelected('allFilesContainer');
+        });
+
+        document.getElementById('downloadSelectedRuleBtn').addEventListener('click', function () {
+            downloadSelected('ruleFilesContainer');
+        });
+
+        // ปุ่มดาวน์โหลด ZIP
+        document.getElementById('downloadZipAllBtn').addEventListener('click', function () {
+            showLoading('กำลังสร้างไฟล์ ZIP...');
+            setTimeout(() => {
+                downloadAllAsZip('allFilesContainer')
+                    .then(() => hideLoading())
+                    .catch(err => {
+                        hideLoading();
+                        alert('เกิดข้อผิดพลาด: ' + err.message);
+                    });
+            }, 100);
+        });
+
+        document.getElementById('downloadZipRuleBtn').addEventListener('click', function () {
+            showLoading('กำลังสร้างไฟล์ ZIP...');
+            setTimeout(() => {
+                downloadAllAsZip('ruleFilesContainer')
+                    .then(() => hideLoading())
+                    .catch(err => {
+                        hideLoading();
+                        alert('เกิดข้อผิดพลาด: ' + err.message);
+                    });
+            }, 100);
+        });
+    </script>
+</body>
+
+</html>
